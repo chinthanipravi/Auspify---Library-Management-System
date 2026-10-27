@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura LMS - Library Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <canvas id="spatial-canvas"></canvas>
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- 1. AUTH PORTAL OVERLAY -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card">
+            <div class="brand" style="justify-content: center; margin-bottom: 8px; font-size: 24px;">
+                <i class="fa-solid fa-atom fa-spin"></i> AURA LMS
+            </div>
+            <p style="text-align: center; color: var(--text-dim); font-size: 11px; font-family: 'Orbitron'; margin-bottom: 15px;">
+                LIBRARY MANAGEMENT SYSTEM
+            </p>
+
+            <div class="quick-login-box">
+                <button class="quick-btn" onclick="quickLogin('admin')"><i class="fa-solid fa-user-shield"></i> Demo Admin</button>
+                <button class="quick-btn" onclick="quickLogin('student')"><i class="fa-solid fa-graduation-cap"></i> Demo Student</button>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="tab-btn active" id="tab-login-btn" onclick="switchAuthTab('login')">LOGIN</button>
+                <button class="tab-btn" id="tab-reg-btn" onclick="switchAuthTab('register')">REGISTER</button>
+            </div>
+
+            <form id="form-login" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label>USERNAME</label>
+                    <input type="text" id="login-user" placeholder="e.g. admin or student" required>
+                </div>
+                <div class="input-group">
+                    <label>PASSWORD</label>
+                    <input type="password" id="login-pass" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn-btn" style="padding: 12px; margin-top: 10px;">AUTHENTICATE SESSION</button>
+            </form>
+
+            <form id="form-register" onsubmit="handleRegister(event)" style="display: none;">
+                <div class="input-group">
+                    <label>FULL NAME</label>
+                    <input type="text" id="reg-fullname" placeholder="e.g. Nimal Perera" required>
+                </div>
+                <div class="input-group">
+                    <label>USERNAME</label>
+                    <input type="text" id="reg-user" placeholder="e.g. nimal123" required>
+                </div>
+                <div class="input-group">
+                    <label>PASSWORD</label>
+                    <input type="password" id="reg-pass" placeholder="Create password" required>
+                </div>
+                <div class="input-group">
+                    <label>USER ROLE</label>
+                    <select id="reg-role" class="form-select">
+                        <option value="student">Student Account</option>
+                        <option value="admin">Admin Account</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-btn" style="padding: 12px; margin-top: 10px;">CREATE ACCOUNT</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. MAIN WORKSPACE -->
+    <div id="app-container" class="app-container" style="display: none;">
+        
+        <aside class="sidebar">
+            <div>
+                <div class="brand"><i class="fa-solid fa-atom fa-spin"></i> AURA LMS</div>
+                <nav class="nav-list">
+                    <button class="nav-btn admin-only" onclick="showView('view-dash', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+                    <button class="nav-btn" onclick="showCatalog(this)"><i class="fa-solid fa-book-bookmark"></i> Book Catalog</button>
+                    <button class="nav-btn student-only" onclick="showView('view-mybooks', this)"><i class="fa-solid fa-graduation-cap"></i> My Borrowed Books</button>
+                    <button class="nav-btn student-only" onclick="showWishlist(this)"><i class="fa-solid fa-heart"></i> My Wishlist</button>
+                    <button class="nav-btn admin-only" onclick="showView('view-tx', this)"><i class="fa-solid fa-arrow-right-arrow-left"></i> All Transactions</button>
+                    <button class="nav-btn admin-only" onclick="showView('view-add', this)"><i class="fa-solid fa-plus-circle"></i> Add New Book</button>
+                    <button class="nav-btn admin-only" onclick="showView('view-logs', this)"><i class="fa-solid fa-terminal"></i> Activity Logs</button>
+                </nav>
+            </div>
+            <div>
+                <button onclick="handleLogout()" class="nav-btn" style="color: var(--red); border-color: rgba(248,113,113,0.2);">
+                    <i class="fa-solid fa-power-off"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-workspace">
+            
+            <div class="top-header">
+                <div class="filter-controls">
+                    <div class="search-bar">
+                        <i class="fa-solid fa-search" style="color: var(--amber);"></i>
+                        <input type="text" id="search-input" oninput="filterBooks()" placeholder="Search title or author...">
+                    </div>
+
+                    <select id="category-filter" class="category-select" onchange="filterBooks()">
+                        <option value="All">All Categories</option>
+                        <option value="Novels">Novels</option>
+                        <option value="Business">Business</option>
+                        <option value="Storybooks">Storybooks</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Technology">Technology</option>
+                    </select>
+
+                    <select id="sort-filter" class="category-select" onchange="filterBooks()">
+                        <option value="default">Sort: Default</option>
+                        <option value="title-az">Title (A-Z)</option>
+                        <option value="rating">Highest Rating</option>
+                        <option value="avail">Available First</option>
+                    </select>
+
+                    <div style="display: flex; gap: 5px;">
+                        <button id="btn-grid-view" class="view-btn active" onclick="setViewMode('grid')"><i class="fa-solid fa-grip-vertical"></i></button>
+                        <button id="btn-table-view" class="view-btn" onclick="setViewMode('table')"><i class="fa-solid fa-list"></i></button>
+                    </div>
+                </div>
+
+                <div style="font-size: 13px; color: var(--amber); font-family: 'Orbitron'; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle" style="font-size: 8px; color: var(--green);"></i> 
+                    <span id="user-display">USER: UNKNOWN</span>
+                </div>
+            </div>
+
+            <!-- STATS COUNTERS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span style="color: var(--text-dim); font-size: 12px;">Total Books in Catalog</span>
+                    <div class="stat-val" id="stat-total">0</div>
+                </div>
+                <div class="stat-card">
+                    <span style="color: var(--text-dim); font-size: 12px;">Available to Borrow</span>
+                    <div class="stat-val" style="color: var(--green);" id="stat-avail">0</div>
+                </div>
+                <div class="stat-card">
+                    <span style="color: var(--text-dim); font-size: 12px;" id="stat-issued-label">Issued Items</span>
+                    <div class="stat-val" style="color: var(--red);" id="stat-issued">0</div>
+                </div>
+            </div>
+
+            <!-- VIEW: ADMIN DASHBOARD -->
+            <div id="view-dash" class="view-sec admin-only">
+                <h3 style="font-family: 'Orbitron'; color: var(--amber); margin-bottom: 20px;"><i class="fa-solid fa-gauge"></i> Admin System Overview</h3>
+                <div class="glass-box">
+                    <h4 style="margin-bottom: 10px;">Library Management Central Node</h4>
+                    <p style="color: var(--text-dim); font-size: 14px; line-height: 1.6;">
+                        Manage books, issue/return transactions, generate CSV report exports, and monitor database telemetry.
+                        All changes are saved persistently in MySQL Database.
+                    </p>
+                </div>
+                <h4 style="font-family: 'Orbitron'; color: var(--text-dim); margin-bottom: 15px;">Recent System Telemetry</h4>
+                <table>
+                    <thead>
+                        <tr><th>EVENT ID</th><th>ACTION</th><th>DETAIL</th><th>TIMESTAMP</th></tr>
+                    </thead>
+                    <tbody id="dash-logs-body"></tbody>
+                </table>
+            </div>
+
+            <!-- VIEW: BOOK CATALOG -->
+            <div id="view-matrix" class="view-sec">
+                <h3 style="font-family: 'Orbitron'; color: var(--amber); margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Book Catalog Matrix</h3>
+                <div class="grid-cards" id="books-container"></div>
+            </div>
+
+            <!-- VIEW: STUDENT BORROWED BOOKS -->
+            <div id="view-mybooks" class="view-sec student-only" style="display: none;">
+                <h3 style="font-family: 'Orbitron'; color: var(--amber); margin-bottom: 20px;"><i class="fa-solid fa-graduation-cap"></i> My Active Borrowed Books</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>COVER</th>
+                            <th>CATEGORY</th>
+                            <th>ISBN CODE</th>
+                            <th>BOOK TITLE</th>
+                            <th>AUTHOR</th>
+                            <th>DUE DATE</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="my-books-body"></tbody>
+                </table>
+            </div>
+
+            <!-- VIEW: ADMIN ALL TRANSACTIONS -->
+            <div id="view-tx" class="view-sec admin-only" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-family: 'Orbitron'; color: var(--amber);"><i class="fa-solid fa-receipt"></i> Active Borrow Transactions</h3>
+                    <button onclick="exportCSV()" class="category-select" style="background: var(--amber); color: #000; border: none; font-weight: bold;">
+                        <i class="fa-solid fa-file-csv"></i> Export CSV Report
+                    </button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ISBN CODE</th>
+                            <th>BOOK TITLE</th>
+                            <th>CATEGORY</th>
+                            <th>BORROWER</th>
+                            <th>STATUS</th>
+                            <th>ADMIN ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- VIEW: ADMIN ADD BOOK -->
+            <div id="view-add" class="view-sec admin-only" style="display: none;">
+                <div class="glass-box" style="max-width: 600px;">
+                    <h3 style="font-family: 'Orbitron'; color: var(--amber); margin-bottom: 20px;"><i class="fa-solid fa-plus-circle"></i> Inject New Book Record</h3>
+                    <form onsubmit="addBook(event)">
+                        <div class="input-group">
+                            <label>BOOK TITLE</label>
+                            <input type="text" id="new-title" class="form-input" placeholder="e.g. Clean Architecture" required>
+                        </div>
+                        <div class="input-group">
+                            <label>AUTHOR NAME</label>
+                            <input type="text" id="new-author" class="form-input" placeholder="e.g. Robert C. Martin" required>
+                        </div>
+                        <div class="input-group">
+                            <label>CATEGORY</label>
+                            <select id="new-category" class="form-select" required>
+                                <option value="Novels">Novels</option>
+                                <option value="Business">Business</option>
+                                <option value="Storybooks">Storybooks</option>
+                                <option value="Sci-Fi">Sci-Fi</option>
+                                <option value="Technology">Technology</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>ISBN CODE</label>
+                            <input type="text" id="new-isbn" class="form-input" placeholder="e.g. 978-0134494166" required>
+                        </div>
+                        <div class="input-group">
+                            <label>COVER IMAGE URL</label>
+                            <input type="url" id="new-cover" class="form-input" placeholder="https://images.unsplash.com/..." required>
+                        </div>
+                        <div class="input-group">
+                            <label>DESCRIPTION SUMMARY</label>
+                            <input type="text" id="new-desc" class="form-input" placeholder="Brief summary of book content..." required>
+                        </div>
+                        <button type="submit" class="btn-btn" style="padding: 12px; margin-top: 10px;">SAVE TO DATABASE</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- VIEW: ADMIN LOGS -->
+            <div id="view-logs" class="view-sec admin-only" style="display: none;">
+                <h3 style="font-family: 'Orbitron'; color: var(--amber); margin-bottom: 20px;"><i class="fa-solid fa-terminal"></i> Database Activity Telemetry</h3>
+                <div class="glass-box" style="font-family: monospace; color: var(--amber); display: flex; flex-direction: column; gap: 10px;" id="telemetry-terminal"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- BOOK DETAILS MODAL -->
+    <div id="book-modal" class="modal-overlay">
+        <div class="modal-card">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeBookModal()"></i>
+            <img id="modal-img" src="" style="width: 180px; height: 250px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border);">
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <span id="modal-category" class="badge badge-cat" style="margin-bottom: 10px;"></span>
+                    <h2 id="modal-title" style="font-size: 20px; color: var(--amber); margin-bottom: 5px;"></h2>
+                    <p id="modal-author" style="color: var(--text-dim); font-size: 13px; margin-bottom: 10px;"></p>
+                    <div id="modal-rating" class="star-rating"></div>
+                    <p id="modal-desc" style="font-size: 13px; line-height: 1.6; color: var(--text); margin-top: 10px;"></p>
+                </div>
+                <div>
+                    <div style="font-size: 11px; font-family: monospace; color: var(--amber); margin-bottom: 12px;" id="modal-isbn"></div>
+                    <button id="modal-action-btn" class="btn-btn">Borrow Book</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
